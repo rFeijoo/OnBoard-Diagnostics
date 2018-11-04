@@ -1,21 +1,36 @@
-//Include the SoftwareSerial library
+/**********************************************************************************************/
+/*                                                                                            */
+/*                                                                                            */
+/*        OBD-II_Bluetooth                             Author: Rafael Feijó Leonardo          */
+/*                                                     Email: goldcard99@hotmail.com          */
+/*                                                     DF, BRAZIL, 70673-435                  */
+/*        Data de criação   : 2018/10/01 20:36:13                                             */
+/*        Última atualização: 2018/10/03 22:58:19                                             */
+/*                                                                       All rights reserved  */
+/**********************************************************************************************/
+
+//Includes
+#include <avr/wdt.h>
 #include "SoftwareSerial.h"
 
-//Define GPIOs
+//Definitions
 #define bt_state 7
 
-//Create a new instance of software  serial
-SoftwareSerial bluetooth(2, 3);     //TX(HC05) = 2(Arduino), RX(HC05) 3.3v = 3(Arduino)
+//Create a new instance of software serial || TX(HC05) = 2(Arduino), RX(HC05) 3.3v = 3(Arduino)
+SoftwareSerial bluetooth(2, 3);
 
 //Global variables
 bool  bt_aux = false;
 
 //BT get data from ELM-327
-void ft_bt_get_data(char *cmd)
+char *ft_bt_get_data(char *cmd)
 {
-  char r;
-  int i = 0;
+  int  i = 0, j = 0;
+  char r, data[30] = "";
   bool prompt = false, aux = true;
+
+  bluetooth.print(cmd);
+  bluetooth.print("\r\n");
       
   while (!prompt)
   {
@@ -41,9 +56,13 @@ void ft_bt_get_data(char *cmd)
         }
         else
           Serial.print(r);
+        data[j++] = r;
       }
     }
   }
+  data[j] = '\0';
+  delay(50);
+  return (data);
 }
 
 //BT check connection with ELM-327
@@ -55,20 +74,17 @@ void ft_bt_connect(void)
     {
       Serial.println(F("\n\n*********** BT CONNECTED! ***********\n\n"));
       
-      // Module Reset
-        bluetooth.print("ATZ\r\n");
+      //Module Reset
         ft_bt_get_data("ATZ");
-        delay(250);
         
-      // Module Reset
-        bluetooth.print("ATSP0\r\n");
+      //Set auto configure
         ft_bt_get_data("ATSP0");
-        delay(250);
 
-      // Module Reset
-        bluetooth.print("ATDP\r\n");
+      //Check protocols
         ft_bt_get_data("ATDP");
-        delay(250);
+
+      //Check battery voltage
+        ft_bt_get_data("ATRV");
         
         Serial.println(F("\n\nType the AT commands:\n"));
         bt_aux = true;
@@ -78,9 +94,27 @@ void ft_bt_connect(void)
   {
     if (bt_aux)
     {
-      Serial.println(F("\n\n** BT DISCONNECTED **\n"));
+      Serial.println(F("\n\n********* BT DISCONNECTED ***********\n\n"));
       bt_aux = false;
     }
+  }
+}
+
+//Check speed limit
+void ft_speed_limit(void)
+{
+  char *v = ft_bt_get_data("010D");
+
+  if (v[14] = 'U')
+    Serial.println("SPEED:\t\tInvalid Operand!\n");
+  else
+  {
+    //separa so os 2 ultimos digitos hex e faz a operação direto
+    int x = int(v[14], DEC) * 10;
+    int y = int(v[15], DEC);
+    int xy = x + y;
+    Serial.print("SPEED:\t\t");
+    Serial.println(xy);
   }
 }
 
@@ -101,15 +135,10 @@ void ft_get_serial(void)
   }
   cmd[i] = '\0';
 
-  bluetooth.print(cmd);
-  bluetooth.print("\r");
-  
-  delay(100);
-  
-  if (bluetooth.available())
-    ft_bt_get_data(cmd);
+  ft_bt_get_data(cmd);
 }
 
+//Setup Function
 void setup(void)
 {
   //Initialize the hardware serial
@@ -125,13 +154,23 @@ void setup(void)
   //Initialize GPIOs
   pinMode(bt_state, INPUT);
 
-  Serial.print(F("*************** START ***************"));
+  Serial.print(F("\n*************** START ***************"));
+  wdt_enable(WDTO_8S);
 }
 
+//Loop Function
 void loop(void)
 {
-  ft_bt_connect();
+  //Check BT connection
+    ft_bt_connect();
 
-  if (Serial.available())
-    ft_get_serial();
+  //Check Speed Limit
+  if (bt_aux)
+    ft_speed_limit();
+
+  //Check Serial Console
+    if (Serial.available())
+      ft_get_serial();
+  
+  wdt_reset();
 }
