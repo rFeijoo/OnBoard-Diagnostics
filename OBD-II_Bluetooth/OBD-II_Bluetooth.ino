@@ -100,22 +100,60 @@ void ft_bt_connect(void)
   }
 }
 
+//Hexadecimal -> decimal
+int hex2dec(char c, char d)
+{
+  int numc = 0, numd = 0;
+  int result = 0;
+
+  if (c == 'A')
+    numc = 10;
+  else if (c == 'B')
+    numc = 11;
+  else if (c == 'C')
+    numc = 12;
+  else if (c == 'D')
+    numc = 13;
+  else if (c == 'E')
+    numc = 14;
+  else if (c == 'F')
+    numc = 15;
+  else
+    numc = atoi(c);
+  numc = numc << 4;
+  if (d == 'A')
+    numd = 10;
+  else if (d == 'B')
+    numd = 11;
+  else if (d == 'C')
+    numd = 12;
+  else if (d == 'D')
+    numd = 13;
+  else if (d == 'E')
+    numd = 14;
+  else if (d == 'F')
+    numd = 15;
+  else
+    numd = atoi(d);
+  result = numc + numd;
+  return (result);
+}
+
 //Check speed limit
 void ft_speed_limit(void)
 {
   char *v = ft_bt_get_data("010D");
 
-  if (v[14] = 'U')
+  Serial.println(v);
+  if (v[1] == 'S')
     Serial.println("SPEED:\t\tInvalid Operand!\n");
   else
   {
-    //separa so os 2 ultimos digitos hex e faz a operação direto
-    int x = int(v[14], DEC) * 10;
-    int y = int(v[15], DEC);
-    int xy = x + y;
     Serial.print("SPEED:\t\t");
-    Serial.println(xy);
+    Serial.print(v[7]);
+    Serial.println(v[8]);
   }
+  delay(1000);
 }
 
 //Get data from Serial Console
