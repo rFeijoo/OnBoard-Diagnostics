@@ -14,7 +14,7 @@
 #include "SoftwareSerial.h"
 
 //Definitions
-#define bt_state 7
+#define bt_is_connected 7
 
 //Create a new instance of software serial || TX(HC05) = 2(Arduino), RX(HC05) 3.3v = 3(Arduino)
 SoftwareSerial bluetooth(2, 3);
@@ -68,7 +68,7 @@ char *ft_bt_get_data(char *cmd)
 //BT check connection with ELM-327
 void ft_bt_connect(void)
 {
-  if (digitalRead(bt_state))
+  if (digitalRead(bt_is_connected))
   {
     if (!bt_aux)
     {
@@ -100,58 +100,32 @@ void ft_bt_connect(void)
   }
 }
 
-//Hexadecimal -> decimal
-int hex2dec(char c, char d)
-{
-  int numc = 0, numd = 0;
-  int result = 0;
-
-  if (c == 'A')
-    numc = 10;
-  else if (c == 'B')
-    numc = 11;
-  else if (c == 'C')
-    numc = 12;
-  else if (c == 'D')
-    numc = 13;
-  else if (c == 'E')
-    numc = 14;
-  else if (c == 'F')
-    numc = 15;
-  else
-    numc = atoi(c);
-  numc = numc << 4;
-  if (d == 'A')
-    numd = 10;
-  else if (d == 'B')
-    numd = 11;
-  else if (d == 'C')
-    numd = 12;
-  else if (d == 'D')
-    numd = 13;
-  else if (d == 'E')
-    numd = 14;
-  else if (d == 'F')
-    numd = 15;
-  else
-    numd = atoi(d);
-  result = numc + numd;
-  return (result);
-}
-
 //Check speed limit
-void ft_speed_limit(void)
+void ft_get_params(void)
 {
-  char *v = ft_bt_get_data("010D");
+  //Speed
+    char *s = ft_bt_get_data("010D");
 
-  Serial.println(v);
-  if (v[1] == 'S')
+  if (s[1] == 'S')
     Serial.println("SPEED:\t\tInvalid Operand!\n");
   else
   {
     Serial.print("SPEED:\t\t");
-    Serial.print(v[7]);
-    Serial.println(v[8]);
+    Serial.print(s[7]);
+    Serial.println(s[8]);
+  }
+  delay(1000);
+
+  //Fuel rate
+    char *fr = ft_bt_get_data("015E");
+
+  if (fr[1] == 'S')
+    Serial.println("FUEL RATE:\t\tInvalid Operand!\n");
+  else
+  {
+    Serial.print("FUEL RATE:\t\t");
+    Serial.print(fr[7]);
+    Serial.println(fr[8]);
   }
   delay(1000);
 }
@@ -190,7 +164,7 @@ void setup(void)
     ;
 
   //Initialize GPIOs
-  pinMode(bt_state, INPUT);
+  pinMode(bt_is_connected, INPUT);
 
   Serial.print(F("\n*************** START ***************"));
   wdt_enable(WDTO_8S);
@@ -204,7 +178,7 @@ void loop(void)
 
   //Check Speed Limit
   if (bt_aux)
-    ft_speed_limit();
+    ft_get_params();
 
   //Check Serial Console
     if (Serial.available())
