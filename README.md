@@ -10,3 +10,6 @@ So far, this project is only auto-connecting to OBD-II, as well as keep the conn
 - https://sites.google.com/site/grcbyte/electronica/arduino/obdii-bluetooth
 - https://en.wikipedia.org/wiki/OBD-II_PIDs
 - https://www.obdsol.com/knowledgebase/obd-software-development/reading-real-time-data/
+- https://github.com/evandentremont/ELM327
+- https://www.instructables.com/id/Arduino-OBD2-ELM327-I2C-LCD-HC05-Bluetooth/
+- https://www.robocore.net/tutoriais/configurando-bluetooth-hc-05-via-arduino.html
